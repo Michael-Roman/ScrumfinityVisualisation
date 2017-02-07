@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Code Contribution Graph</title>
+  </head>
+  <body>
+      <script src="three.min.js"></script>
+      <script src="OrbitControls.js"></script>
+      <div>
+          <text id = "module"></text><br>
+      </div>
+      <div id="container"></div>  
+      <script>
+var container, stats;
+
+var camera, controls, scene, renderer;
+
+var cross, mesh2, xpos;
+        
+        // Did not manage to get display formatted nicely with the JSON files, issues with colours and arrays
+      var names = ["dir","adl52","apw76","cab183","msr51","ssc55","zma16","total"];
+      var otherNames = ["model", "controller", "dialogControllers", "undoredo", "util", "resources", "Main,java", "App.java"];
+        var model = ["model",1963,5118,2729,6375,8765,1726,26676];
+        var cont = ["controller",2454,4117,3761,5754,6405,2161,24652];
+        var diag = ["dialogControllers",1269,4463,2974,5953,4043,2024,20726];
+        var undo = ["undoredo",953,3474,35,626,9947,1262,16297];
+        var util = ["util",425,4080,2763,4113,1746,665,13792];
+        var res = ["resources",2731,3323,1510,871,1900,2205,12540];
+        var main = ["Main.java",845,1186,278,806,2105,1003,6223];
+        var app = ["App.java",0,0,0,13,17,0,30];
+
+init();
+animate();
+
+function init() {
+
+  camera = new THREE.PerspectiveCamera( 60, window.innerWidth /     window.innerHeight, 1, 1000);
+  camera.position.z = 500;
+
+  controls = new THREE.OrbitControls( camera );
+  controls.addEventListener( 'change', render );
+
+  scene = new THREE.Scene();
+
+
+  // world
+  // putting into another function kept breaking everything, so copy pasta instead
+
+  var stagger = -10;
+  makeBar(0, stagger, main);
+  stagger += -15;
+  makeBar(0, stagger, res);
+  stagger += -15;
+  makeBar(0, stagger, util);
+  stagger += -15;
+  makeBar(0, stagger, undo);
+  stagger += -15;
+  makeBar(0, stagger, diag);
+  stagger += -15;
+  makeBar(0, stagger, cont);
+  stagger += -15;
+  makeBar(0, stagger, model);
+  
+  var loc_grid = createAGrid({
+    height: 45,
+    width: 110,
+    linesHeight: 10,
+    linesWidth: 10,
+    color: 0x000000
+  });
+  loc_grid.translateX(37.5);
+  loc_grid.translateY(110);
+  loc_grid.translateZ(-106);
+  scene.add(loc_grid);
+  
+  makeSprites(names);
+  makeSpritesClass(otherNames)
+  
+  
+
+  // lights
+
+  light = new THREE.DirectionalLight( 0xffffff );
+  light.position.set( 1000, 1000, -1000 );
+  scene.add( light );
+
+  light = new THREE.DirectionalLight( 0x002288 );
+  light.position.set( -1000, -1000, 1000 );
+  scene.add( light );
+
+  light = new THREE.AmbientLight( 0x222222 );
+  scene.add( light );
+
+
+  // renderer
+
+  renderer = new THREE.WebGLRenderer( { antialias: false } );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setClearColor (0xe5e5e5, 1);
+
+  container = document.getElementById( 'container' );
+  container.appendChild( renderer.domElement );
+
+  window.addEventListener( 'resize', onWindowResize, false );
+
+}
+
+function makeBar(sX, sZ, sArray) {
+  var xPos = sX;
+  for ( var i = 1; i < 7; i ++ ) {
+    geometry = new THREE.BoxGeometry(10,sArray[i]/50,10);
+    material = new THREE.MeshLambertMaterial( { color:getMaterial(i),} );
+    var mesh = new THREE.Mesh( geometry, material );
+    mesh.translateX(xPos);
+    mesh.translateZ(sZ);
+    mesh.translateY(sArray[i]/100);
+    xPos += 15;
+    mesh.updateMatrix();
+    mesh.matrixAutoUpdate = false;
+    scene.add( mesh );
+  }
+}
+
+function makeSprites(spriteArray) {
+    var stagger = -5;
+    var y = 50;
+    for (var i = 1; i < 7; i++) {
+        // create a canvas element
+        var canvas1 = document.createElement('canvas');
+        var context1 = canvas1.getContext('2d');
+        context1.font = "Boldface 14px Arial";
+        context1.fillStyle = "rgba(0,0,0,1)";
+        context1.fillText(spriteArray[i], 0, 10);
+    
+        // canvas contents will be used for a texture
+        var texture1 = new THREE.Texture(canvas1) 
+        texture1.needsUpdate = true;
+      
+        var material1 = new THREE.MeshBasicMaterial( {map: texture1, side:THREE.DoubleSide } );
+        material1.transparent = true;
+
+        var mesh1 = new THREE.Mesh(
+            new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+            material1
+        );
+        mesh1.rotation.set(-90, 0, -90);
+        mesh1.position.set(stagger-124,y,20+70);
+        
+        scene.add( mesh1 );
+        stagger += 15;
+        y+=-1;
+    }
+}
+
+function makeSpritesClass(spriteArray) {
+    var stagger = -5;
+    var y = -60;
+    for (var i = 0; i < 7; i++) {
+        // create a canvas element
+        var canvas1 = document.createElement('canvas');
+        var context1 = canvas1.getContext('2d');
+        context1.font = "Boldface 14px Arial";
+        context1.fillStyle = "rgba(0,0,0,1)";
+        context1.fillText(spriteArray[i], 0, 10);
+    
+        // canvas contents will be used for a texture
+        var texture1 = new THREE.Texture(canvas1) 
+        texture1.needsUpdate = true;
+      
+        var material1 = new THREE.MeshBasicMaterial( {map: texture1, side:THREE.DoubleSide } );
+        material1.transparent = true;
+
+        var mesh1 = new THREE.Mesh(
+            new THREE.PlaneGeometry(canvas1.width, canvas1.height),
+            material1
+        );
+        mesh1.position.set(240,y,stagger);
+        
+        scene.add( mesh1 );
+        stagger += -15;
+        y+=-1;
+    }
+}
+
+
+
+function makeTextSprite(message, opts) {
+  var parameters = opts || {};
+  var fontface = parameters.fontface || 'Helvetica';
+  var fontsize = parameters.fontsize || 70;
+  var canvas = document.createElement('canvas');
+  var context = canvas.getContext('2d');
+  context.font = fontsize + "px " + fontface;
+
+  // get size data (height depends only on font size)
+  var metrics = context.measureText(message);
+  var textWidth = metrics.width;
+
+  // text color
+  context.fillStyle = 'rgba(1.0, 1.0, 1.0, 1.0)';
+  context.fillText(message, 0, fontsize);
+
+  // canvas contents will be used for a texture
+  var texture = new THREE.Texture(canvas)
+  texture.minFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+
+  var spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      useScreenCoordinates: false
+  });
+  var sprite = new THREE.Sprite(spriteMaterial);
+  sprite.scale.set(50, 25, 1.0);
+  return sprite;
+}
+
+function getMaterial(j) {
+    switch (j) {
+        case 1:
+            return 0x00ff00
+        case 2:
+            return 0x669900
+        case 3:
+            return 0xffcc00
+        case 4:
+            return 0xff6666
+        case 5:
+            return 0xff00ff
+        case 6:
+            return 0x0066ff
+    }
+}
+
+      function poplist(list, z) {
+          
+      }
+
+function onWindowResize() {
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+
+  render();
+
+}
+
+function animate() {
+
+  requestAnimationFrame( animate );
+  controls.update();
+
+}
+
+function render() {
+  renderer.render( scene, camera );
+}
+
+function createAGrid(opts) {
+  var config = opts || {
+    height: 500,
+    width: 500,
+    linesHeight: 10,
+    linesWidth: 10,
+    color: 0xDD006C
+  };
+
+  var material = new THREE.LineBasicMaterial({
+    color: config.color,
+    opacity: 0.2
+  });
+
+  var gridObject = new THREE.Object3D(),
+    gridGeo = new THREE.Geometry(),
+    stepw = 2 * config.width / config.linesWidth,
+    steph = 2 * config.height / config.linesHeight;
+
+  //width
+  for (var i = -config.width; i <= config.width; i += stepw) {
+    gridGeo.vertices.push(new THREE.Vector3(-config.height, i, 0));
+    gridGeo.vertices.push(new THREE.Vector3(config.height, i, 0));
+
+  }
+
+
+  var line = new THREE.Line(gridGeo, material, THREE.LinePieces);
+  gridObject.add(line);
+
+  return gridObject;
+}
+
+      </script>
+    </body>
+</html>
+    
